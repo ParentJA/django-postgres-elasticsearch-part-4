@@ -150,7 +150,9 @@ class ViewTests(APITestCase):
             WineSearchWord(word='noir'),
             WineSearchWord(word='merlot'),
         ])
-        response = self.client.get('/api/v1/catalog/wine-search-words/?query=greegio')
+        response = self.client.get('/api/v1/catalog/pg-wine-search-words/', {
+            'query': 'greegio',
+        })
         self.assertEqual(1, len(response.data))
         self.assertEqual('grigio', response.data[0]['word'])
 
@@ -255,6 +257,15 @@ class ESViewTests(APITestCase):
         })
         results = response.data['results']
         self.assertEquals('A delicious bottle of <mark>wine</mark>.', results[0]['description'])
+
+    def test_suggests_words_for_spelling_mistakes(self):
+        response = self.client.get('/api/v1/catalog/es-wine-search-words/', {
+            'query': 'greegio',
+        })
+        # Suggestions are: "grigio" (freq=1483) and "grego" (freq=1)
+        self.assertEqual(2, len(response.data))
+        self.assertEqual('grigio', response.data[0]['word'])
+        self.assertEqual('grego', response.data[1]['word'])
 
     def tearDown(self):
         # Stop patching
